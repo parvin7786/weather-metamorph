@@ -1,0 +1,6 @@
+package com.example.weather_backend.cache;
+
+public class WeatherCache
+{
+
+}

@@ -1,0 +1,32 @@
+package com.example.weather_backend.service;
+
+
+import com.example.weather.cache.WeatherCache;
+import com.example.weather.client.OpenWeatherClient;
+import com.example.weather.model.WeatherResponse;
+import org.springframework.stereotype.Service;
+
+@Service
+public class WeatherService {
+
+    private final WeatherCache cache;
+    private final OpenWeatherClient client;
+
+    public WeatherService(WeatherCache cache, OpenWeatherClient client) {
+        this.cache = cache;
+        this.client = client;
+    }
+
+    public WeatherResponse getWeather(String city) {
+
+        WeatherResponse cached = cache.get(city);
+        if (cached != null) {
+            return cached;
+        }
+
+        WeatherResponse fresh = client.fetchWeather(city);
+        cache.put(city, fresh);
+        return fresh;
+    }
+}
+

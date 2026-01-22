@@ -1,0 +1,54 @@
+package com.example.weather.cache;
+
+import com.example.weather_backend.model.WeatherResponse;
+import org.springframework.stereotype.Component;
+
+import java.time.Instant;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+@Component
+public class WeatherCache {
+
+    private static final int MAX_ENTRIES = 100;
+    private static final long TTL_SECONDS = 600;
+
+    private final Map<String, CacheEntry> cache =
+            new LinkedHashMap<>(16, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(Map.Entry<String, CacheEntry> eldest) {
+                    return size() > MAX_ENTRIES;
+                }
+            };
+
+    public synchronized WeatherResponse get(String city) {
+        CacheEntry entry = cache.get(city.toLowerCase());
+
+        if (entry == null || entry.isExpired()) {
+            cache.remove(city.toLowerCase());
+            return null;
+        }
+        return entry.data;
+    }
+
+    public synchronized void put(String city, WeatherResponse data) {
+        cache.put(city.toLowerCase(), new CacheEntry(data));
+    }
+
+    /* ================= INNER CACHE ENTRY ================= */
+    private static class CacheEntry {
+
+        private WeatherResponse data;
+        private long createdAt;
+
+        // ✅ CONSTRUCTOR (THIS FIXES THE ERROR)
+        public CacheEntry(WeatherResponse data) {
+            this.data = data;
+            this.createdAt = Instant.now().getEpochSecond();
+        }
+
+        public boolean isExpired() {
+            return Instant.now().getEpochSecond() - createdAt > TTL_SECONDS;
+        }
+    }
+}

@@ -1,0 +1,40 @@
+package com.example.weather_backend.controller;
+
+
+import com.example.weather_backend.model.WeatherResponse;
+import com.example.weather_backend.service.WeatherService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/weather")
+@CrossOrigin(origins = "*")
+public class WeatherController {
+
+    private final WeatherService weatherService;
+
+    public WeatherController(WeatherService weatherService) {
+        this.weatherService = weatherService;
+    }
+
+    @GetMapping
+    public ResponseEntity<?> getWeather(@RequestParam String city) {
+
+        if (city == null || city.trim().isEmpty()) {
+            return ResponseEntity
+                    .badRequest()
+                    .body("City name is required");
+        }
+
+        try {
+            WeatherResponse response = weatherService.getWeather(city.trim());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body("City not found");
+        }
+    }
+}
+

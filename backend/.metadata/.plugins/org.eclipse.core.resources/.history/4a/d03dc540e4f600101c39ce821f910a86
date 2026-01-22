@@ -1,0 +1,47 @@
+package com.example.weather_backend.client;
+
+
+
+import com.example.weather.model.WeatherResponse;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.List;
+import java.util.Map;
+
+@Component
+public class OpenWeatherClient {
+
+    private static final String API_KEY = "YOUR_OPENWEATHER_API_KEY";
+
+    private static final String URL =
+            "https://api.openweathermap.org/data/2.5/weather?q={city}&appid={key}&units=metric";
+
+    private final RestTemplate restTemplate = new RestTemplate();
+
+    public WeatherResponse fetchWeather(String city) {
+
+        Map response = restTemplate.getForObject(URL, Map.class, city, API_KEY);
+
+        if (response == null || response.get("main") == null) {
+            throw new RuntimeException("City not found");
+        }
+
+        Map main = (Map) response.get("main");
+        Map wind = (Map) response.get("wind");
+        Map sys = (Map) response.get("sys");
+        Map weather = (Map) ((List) response.get("weather")).get(0);
+
+        WeatherResponse wr = new WeatherResponse();
+        wr.setCity(city);
+        wr.setCountry(sys.get("country").toString());
+        wr.setTemperature(((Number) main.get("temp")).doubleValue());
+        wr.setHumidity(((Number) main.get("humidity")).intValue());
+        wr.setPressure(((Number) main.get("pressure")).intValue());
+        wr.setWindSpeed(((Number) wind.get("speed")).doubleValue());
+        wr.setVisibility(((Number) response.get("visibility")).intValue() / 1000);
+        wr.setCondition(weather.get("main").toString());
+
+        return wr;
+    }
+}
